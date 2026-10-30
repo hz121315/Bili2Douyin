@@ -14,6 +14,12 @@
   const TARGET_QUEUE_MS = 800;
   const TICK_MS = 100;
   const TICK_OFFSET = 36;
+  const SHADOWS = [
+    'none',
+    '0 0 1px rgba(0, 0, 0, 0.65)',
+    '0 0 2px rgba(0, 0, 0, 0.92), 0 0 5px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.9)',
+    '0 1px 2px #000, 0 0 3px #000, 0 0 6px rgba(0, 0, 0, 0.9), 0 2px 6px #000',
+  ];
 
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
@@ -44,6 +50,8 @@
       this.scArea = null;
       this.rect = null;
       this.fontSize = 20;
+      this.fontFamily =
+        '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif';
       this.laneHeight = 33;
       this.laneFreeAt = [];
       this.active = new Set();
@@ -51,6 +59,8 @@
       this.pumpTimer = null;
       this.lastPumpAt = 0;
       this.speedSeconds = 12;
+      this.opacity = 1;
+      this.shadowLevel = 2;
       this.colorMode = 'original';
       this.customColor = '#ffffff';
       this.density = 100;
@@ -99,6 +109,36 @@
       const value = Number(seconds);
       if (!Number.isFinite(value)) return;
       this.speedSeconds = clamp(value, 4, 20);
+    }
+
+    /** 画面内弹幕字体（完整 CSS font-family 栈）。 */
+    setFontFamily(stack) {
+      if (typeof stack !== 'string' || !stack.trim()) return;
+      this.fontFamily = stack;
+      this.applyStyleVars();
+    }
+
+    /** 画面内弹幕不透明度（0.2 ~ 1）。 */
+    setOpacity(value) {
+      const next = Number(value);
+      if (!Number.isFinite(next)) return;
+      this.opacity = clamp(next, 0.2, 1);
+      this.applyStyleVars();
+    }
+
+    /** 画面内弹幕阴影强度：0 无 / 1 弱 / 2 中 / 3 强。 */
+    setShadow(level) {
+      const next = Number(level);
+      if (!Number.isFinite(next)) return;
+      this.shadowLevel = clamp(Math.round(next), 0, 3);
+      this.applyStyleVars();
+    }
+
+    applyStyleVars() {
+      if (!this.root) return;
+      this.root.style.setProperty('--bdm-dm-opacity', String(this.opacity));
+      this.root.style.setProperty('--bdm-dm-shadow', SHADOWS[this.shadowLevel] || SHADOWS[2]);
+      this.root.style.setProperty('--bdm-dm-font', this.fontFamily);
     }
 
     /** 颜色模式：original（跟随 B 站）/ white / custom。 */
@@ -229,6 +269,7 @@
       this.area = area;
       this.scArea = scArea;
       this.mountRoot();
+      this.applyStyleVars();
     }
 
     mountRoot() {

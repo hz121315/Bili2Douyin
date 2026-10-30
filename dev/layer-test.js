@@ -142,6 +142,23 @@
       lastVisible: [...document.querySelectorAll('#bdm-dm-layer .bdm-dm-item')].some((node) => node.textContent === '压测 #1000'),
     };
 
+    // 7) 透明度 / 阴影
+    layer.setEnabled(false);
+    layer.setEnabled(true);
+    await wait(400);
+    layer.setOpacity(0.5);
+    layer.setShadow(0);
+    layer.show([{ kind: 'danmaku', text: '样式测试', color: 0xffffff }]);
+    await wait(800);
+    const styleNode = [...document.querySelectorAll('#bdm-dm-layer .bdm-dm-item')].find((node) => node.textContent === '样式测试');
+    result.style = {
+      opacity: styleNode ? getComputedStyle(styleNode).opacity : 'none',
+      shadowOff: styleNode ? getComputedStyle(styleNode).textShadow : 'none',
+    };
+    layer.setShadow(3);
+    await wait(200);
+    result.style.shadowStrong = styleNode ? getComputedStyle(styleNode).textShadow : 'none';
+
     window.__result = result;
     log(JSON.stringify(result, null, 2));
   })();

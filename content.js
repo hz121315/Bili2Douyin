@@ -39,6 +39,10 @@
     fontSize: 15,
     dmFontSize: 20,
     dmSpeed: 12,
+    dmOpacity: 1,
+    dmShadow: 2,
+    dmFontFamily: 'system',
+    savedRooms: [],
     dmColorMode: 'original',
     dmColor: '#ffffff',
     dmDensity: 100,
@@ -53,6 +57,18 @@
   };
 
   // B 站弹幕里的表情是 [名称] 文本 token，这里把常见的换成 emoji，避免刷屏时满屏方括号
+  const SHADOW_LABELS = ['无', '弱', '中', '强'];
+
+  const FONT_STACKS = {
+    system: '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif',
+    yahei: '"Microsoft YaHei", "微软雅黑", "PingFang SC", sans-serif',
+    simhei: 'SimHei, "黑体", "Microsoft YaHei", sans-serif',
+    simsun: 'SimSun, "宋体", "Songti SC", serif',
+    kaiti: 'KaiTi, "楷体", "Kaiti SC", serif',
+    sourcehan: '"Source Han Sans SC", "Noto Sans CJK SC", "Noto Sans SC", "Microsoft YaHei", sans-serif',
+    pingfang: '"PingFang SC", "苹方", "Microsoft YaHei", sans-serif',
+  };
+
   const EMOTICONS = {
     '大笑': '😄', '笑哭': '😂', '呲牙': '😁', '大哭': '😭', '泪目': '🥲', '委屈': '🥺', '害羞': '😳',
     '喜欢': '😍', '花痴': '😍', '爱心': '❤️', '亲亲': '😘', '白眼': '🙄', '无语': '😑', '嫌弃': '😒',
@@ -107,6 +123,10 @@
           <input id="bdm-room-input" class="bdm-input" data-role="roomInput" type="text"
                  placeholder="例如 6 或 https://live.bilibili.com/6" spellcheck="false">
         </div>
+        <div class="bdm-field">
+          <label class="bdm-label">已保存的直播间（点击快速连接）</label>
+          <div class="bdm-saved" data-role="savedRooms"></div>
+        </div>
         <div class="bdm-row">
           <button class="bdm-btn primary" data-act="connect">连接</button>
           <button class="bdm-btn" data-act="reconnect">重新连接</button>
@@ -131,7 +151,34 @@
         </div>
         <div class="bdm-field">
           <label class="bdm-label">画面内弹幕字号 <span data-role="dmFontValue">20px</span></label>
+          <div class="bdm-seg" data-role="dmFontPresets">
+            <button type="button" class="bdm-seg-btn" data-size="16">16</button>
+            <button type="button" class="bdm-seg-btn" data-size="20">20</button>
+            <button type="button" class="bdm-seg-btn" data-size="24">24</button>
+            <button type="button" class="bdm-seg-btn" data-size="30">30</button>
+            <button type="button" class="bdm-seg-btn" data-size="36">36</button>
+          </div>
           <input class="bdm-range" data-role="dmFontRange" type="range" min="14" max="40" step="1">
+        </div>
+        <div class="bdm-field">
+          <label class="bdm-label">画面内弹幕字体</label>
+          <div class="bdm-font-grid" data-role="dmFontFamilyGroup">
+            <button type="button" class="bdm-font-chip" data-font="system">系统默认</button>
+            <button type="button" class="bdm-font-chip" data-font="yahei">微软雅黑</button>
+            <button type="button" class="bdm-font-chip" data-font="simhei">黑体</button>
+            <button type="button" class="bdm-font-chip" data-font="simsun">宋体</button>
+            <button type="button" class="bdm-font-chip" data-font="kaiti">楷体</button>
+            <button type="button" class="bdm-font-chip" data-font="sourcehan">思源黑体</button>
+            <button type="button" class="bdm-font-chip" data-font="pingfang">苹方</button>
+          </div>
+        </div>
+        <div class="bdm-field">
+          <label class="bdm-label">画面内弹幕不透明度 <span data-role="dmOpacityValue">100%</span></label>
+          <input class="bdm-range" data-role="dmOpacityRange" type="range" min="20" max="100" step="5">
+        </div>
+        <div class="bdm-field">
+          <label class="bdm-label">画面内弹幕阴影 <span data-role="dmShadowValue">中</span></label>
+          <input class="bdm-range" data-role="dmShadowRange" type="range" min="0" max="3" step="1">
         </div>
         <div class="bdm-field">
           <label class="bdm-label">弹幕滚动时长 <span data-role="dmSpeedValue">12 秒</span>（越大越慢）</label>
@@ -199,6 +246,7 @@
   let lastTransport = '';
   let lastTokenLength = 0;
   let networkReceived = 0;
+  let currentRoomTitle = '';
   const statSamples = [];
   let lastStat = { net: 0, shown: 0, dropped: 0 };
   let statTimer = null;
@@ -299,6 +347,20 @@
     settings.fontSize = clamp(Math.round(Number(settings.fontSize) || DEFAULTS.fontSize), 11, 26);
     settings.dmFontSize = clamp(Math.round(Number(settings.dmFontSize) || DEFAULTS.dmFontSize), 14, 40);
     settings.dmSpeed = clamp(Math.round(Number(settings.dmSpeed) || DEFAULTS.dmSpeed), 4, 20);
+    settings.dmOpacity = clamp(Number(settings.dmOpacity) || DEFAULTS.dmOpacity, 0.2, 1);
+    settings.dmShadow = Number.isFinite(Number(settings.dmShadow))
+      ? clamp(Math.round(Number(settings.dmShadow)), 0, 3)
+      : DEFAULTS.dmShadow;
+    if (!FONT_STACKS[settings.dmFontFamily]) settings.dmFontFamily = DEFAULTS.dmFontFamily;
+    settings.savedRooms = Array.isArray(settings.savedRooms)
+      ? settings.savedRooms
+          .filter((room) => room && /^\d{1,12}$/.test(String(room.roomId)))
+          .map((room) => ({ roomId: String(room.roomId), title: String(room.title || '').slice(0, 60) }))
+          .slice(0, 10)
+      : [];
+    if (!settings.savedRooms.length && settings.roomId) {
+      settings.savedRooms = [{ roomId: settings.roomId, title: '' }];
+    }
     settings.dmDensity = clamp(Math.round(Number(settings.dmDensity) || DEFAULTS.dmDensity), 10, 100);
     if (!['original', 'white', 'custom'].includes(settings.dmColorMode)) {
       settings.dmColorMode = DEFAULTS.dmColorMode;
@@ -363,8 +425,15 @@
     el.modeGroup = root.querySelector('[data-role="modeGroup"]');
     el.dmFontRange = root.querySelector('[data-role="dmFontRange"]');
     el.dmFontValue = root.querySelector('[data-role="dmFontValue"]');
+    el.dmFontPresets = root.querySelector('[data-role="dmFontPresets"]');
+    el.dmFontFamilyGroup = root.querySelector('[data-role="dmFontFamilyGroup"]');
+    el.savedRooms = root.querySelector('[data-role="savedRooms"]');
     el.dmSpeedRange = root.querySelector('[data-role="dmSpeedRange"]');
     el.dmSpeedValue = root.querySelector('[data-role="dmSpeedValue"]');
+    el.dmOpacityRange = root.querySelector('[data-role="dmOpacityRange"]');
+    el.dmOpacityValue = root.querySelector('[data-role="dmOpacityValue"]');
+    el.dmShadowRange = root.querySelector('[data-role="dmShadowRange"]');
+    el.dmShadowValue = root.querySelector('[data-role="dmShadowValue"]');
     el.dmColorGroup = root.querySelector('[data-role="dmColorGroup"]');
     el.dmColorPicker = root.querySelector('[data-role="dmColorPicker"]');
     el.dmColorHint = root.querySelector('.bdm-color-hint');
@@ -372,6 +441,11 @@
     el.dmDensityValue = root.querySelector('[data-role="dmDensityValue"]');
     el.dmAreaGroup = root.querySelector('[data-role="dmAreaGroup"]');
     el.diag = root.querySelector('[data-role="diag"]');
+
+    for (const chip of el.dmFontFamilyGroup.querySelectorAll('[data-font]')) {
+      const stack = FONT_STACKS[chip.dataset.font];
+      if (stack) chip.style.fontFamily = stack;
+    }
 
     bindEvents();
     observeResize();
@@ -389,8 +463,14 @@
     el.opacityValue.textContent = `${Math.round(settings.opacity * 100)}%`;
     el.dmFontRange.value = String(settings.dmFontSize);
     el.dmFontValue.textContent = `${settings.dmFontSize}px`;
+    applyFontPresetUI();
+    applyFontFamilyUI();
     el.dmSpeedRange.value = String(settings.dmSpeed);
     el.dmSpeedValue.textContent = `${settings.dmSpeed} 秒`;
+    el.dmOpacityRange.value = String(Math.round(settings.dmOpacity * 100));
+    el.dmOpacityValue.textContent = `${Math.round(settings.dmOpacity * 100)}%`;
+    el.dmShadowRange.value = String(settings.dmShadow);
+    el.dmShadowValue.textContent = SHADOW_LABELS[settings.dmShadow];
     el.dmColorPicker.value = settings.dmColor;
     el.dmColorPicker.disabled = settings.dmColorMode !== 'custom';
     el.dmDensityRange.value = String(settings.dmDensity);
@@ -404,10 +484,14 @@
     dmLayer?.setEnabled(settings.displayMode !== 'panel');
     dmLayer?.setFontSize(settings.dmFontSize);
     dmLayer?.setSpeed(settings.dmSpeed);
+    dmLayer?.setOpacity(settings.dmOpacity);
+    dmLayer?.setShadow(settings.dmShadow);
+    dmLayer?.setFontFamily(FONT_STACKS[settings.dmFontFamily] || FONT_STACKS.system);
     dmLayer?.setColorMode(settings.dmColorMode, settings.dmColor);
     dmLayer?.setDensity(settings.dmDensity);
     dmLayer?.setAreaRatio(areaRatio(settings.dmArea));
     syncLayout();
+    renderSavedRooms();
 
     root.style.display = settings.hidden ? 'none' : '';
   }
@@ -472,6 +556,101 @@
     for (const button of el.dmAreaGroup.querySelectorAll('[data-area]')) {
       button.classList.toggle('is-active', button.dataset.area === settings.dmArea);
     }
+  }
+
+  function applyFontFamilyUI() {
+    if (!el.dmFontFamilyGroup) return;
+    for (const button of el.dmFontFamilyGroup.querySelectorAll('[data-font]')) {
+      button.classList.toggle('is-active', button.dataset.font === settings.dmFontFamily);
+    }
+  }
+
+  function setDanmakuFont(fontKey) {
+    if (!FONT_STACKS[fontKey]) return;
+    settings.dmFontFamily = fontKey;
+    applyFontFamilyUI();
+    dmLayer?.setFontFamily(FONT_STACKS[fontKey]);
+    persist();
+  }
+
+  function truncateText(text, max) {
+    const value = String(text || '');
+    return value.length > max ? `${value.slice(0, max)}…` : value;
+  }
+
+  function renderSavedRooms() {
+    if (!el.savedRooms) return;
+    const rooms = Array.isArray(settings.savedRooms) ? settings.savedRooms : [];
+    el.savedRooms.replaceChildren();
+
+    if (!rooms.length) {
+      const empty = document.createElement('span');
+      empty.className = 'bdm-saved-empty';
+      empty.textContent = '连接过的直播间会自动保存在这里';
+      el.savedRooms.appendChild(empty);
+      return;
+    }
+
+    for (const room of rooms) {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'bdm-saved-chip';
+      chip.dataset.roomId = room.roomId;
+      chip.title = room.title ? `${room.title}（#${room.roomId}）` : `B 站直播间 #${room.roomId}`;
+
+      const label = document.createElement('span');
+      label.className = 'bdm-saved-name';
+      label.textContent = room.title ? `${truncateText(room.title, 12)} · ${room.roomId}` : `#${room.roomId}`;
+
+      const remove = document.createElement('span');
+      remove.className = 'bdm-saved-remove';
+      remove.dataset.removeRoom = room.roomId;
+      remove.title = '从保存列表移除';
+      remove.textContent = '×';
+
+      chip.append(label, remove);
+      el.savedRooms.appendChild(chip);
+    }
+  }
+
+  function rememberRoom(roomId) {
+    if (!roomId) return;
+    const list = (settings.savedRooms || []).filter((room) => room.roomId !== roomId);
+    list.unshift({ roomId, title: roomId === settings.roomId ? currentRoomTitle : '' });
+    settings.savedRooms = list.slice(0, 10);
+    persist();
+    renderSavedRooms();
+  }
+
+  function removeSavedRoom(roomId) {
+    settings.savedRooms = (settings.savedRooms || []).filter((room) => room.roomId !== roomId);
+    persist();
+    renderSavedRooms();
+  }
+
+  function updateSavedRoomTitle(roomId, title) {
+    if (!roomId || !title) return;
+    const room = (settings.savedRooms || []).find((item) => item.roomId === roomId);
+    if (!room || room.title === title) return;
+    room.title = title;
+    persist();
+    renderSavedRooms();
+  }
+
+  function applyFontPresetUI() {
+    if (!el.dmFontPresets) return;
+    for (const button of el.dmFontPresets.querySelectorAll('[data-size]')) {
+      button.classList.toggle('is-active', Number(button.dataset.size) === settings.dmFontSize);
+    }
+  }
+
+  function setFontSize(value) {
+    settings.dmFontSize = clamp(Math.round(Number(value) || DEFAULTS.dmFontSize), 14, 40);
+    el.dmFontRange.value = String(settings.dmFontSize);
+    el.dmFontValue.textContent = `${settings.dmFontSize}px`;
+    applyFontPresetUI();
+    dmLayer?.setFontSize(settings.dmFontSize);
+    persist();
   }
 
   function applyColorModeUI() {
@@ -717,6 +896,11 @@
       if (message.source) lastSource = message.source;
       if (message.transport) lastTransport = message.transport;
       if (typeof message.tokenLength === 'number') lastTokenLength = message.tokenLength;
+      if (message.roomTitle) {
+        currentRoomTitle = message.roomTitle;
+        const statusRoom = String(message.realRoomId || message.roomId || settings.roomId || '');
+        if (statusRoom) updateSavedRoomTitle(statusRoom, message.roomTitle);
+      }
       setStatus(message.phase || 'connecting', message.text || '', message);
     } else if (message.type === 'danmaku' && Array.isArray(message.items)) {
       networkReceived += message.items.length;
@@ -877,7 +1061,10 @@
       return false;
     }
 
-    if (settings.roomId && settings.roomId !== normalized) clearList();
+    if (settings.roomId && settings.roomId !== normalized) {
+      clearList();
+      currentRoomTitle = '';
+    }
     settings.roomId = normalized;
     el.roomInput.value = normalized;
     wantConnect = true;
@@ -886,6 +1073,7 @@
     lastSource = '';
     persist({ roomId: normalized, wantConnected: true });
     el.roomLabel.textContent = `#${normalized}`;
+    rememberRoom(normalized);
 
     if (transportMode === 'frame' && frameReady) {
       lastTransport = 'frame';
@@ -1065,16 +1253,53 @@
     });
 
     el.dmFontRange.addEventListener('input', () => {
-      settings.dmFontSize = clamp(Number(el.dmFontRange.value) || DEFAULTS.dmFontSize, 14, 40);
-      el.dmFontValue.textContent = `${settings.dmFontSize}px`;
-      dmLayer?.setFontSize(settings.dmFontSize);
-      persist();
+      setFontSize(el.dmFontRange.value);
+    });
+
+    el.dmFontPresets.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-size]');
+      if (!button) return;
+      setFontSize(button.dataset.size);
+    });
+
+    el.dmFontFamilyGroup.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-font]');
+      if (!button) return;
+      setDanmakuFont(button.dataset.font);
+    });
+
+    el.savedRooms.addEventListener('click', (event) => {
+      const remove = event.target.closest('[data-remove-room]');
+      if (remove) {
+        removeSavedRoom(remove.dataset.removeRoom);
+        return;
+      }
+      const chip = event.target.closest('[data-room-id]');
+      if (!chip) return;
+      const roomId = chip.dataset.roomId;
+      el.roomInput.value = roomId;
+      connectToRoom(roomId);
+      setSettingsOpen(false);
     });
 
     el.dmSpeedRange.addEventListener('input', () => {
       settings.dmSpeed = clamp(Number(el.dmSpeedRange.value) || DEFAULTS.dmSpeed, 4, 20);
       el.dmSpeedValue.textContent = `${settings.dmSpeed} 秒`;
       dmLayer?.setSpeed(settings.dmSpeed);
+      persist();
+    });
+
+    el.dmOpacityRange.addEventListener('input', () => {
+      settings.dmOpacity = clamp((Number(el.dmOpacityRange.value) || 100) / 100, 0.2, 1);
+      el.dmOpacityValue.textContent = `${Math.round(settings.dmOpacity * 100)}%`;
+      dmLayer?.setOpacity(settings.dmOpacity);
+      persist();
+    });
+
+    el.dmShadowRange.addEventListener('input', () => {
+      settings.dmShadow = clamp(Math.round(Number(el.dmShadowRange.value) || 0), 0, 3);
+      el.dmShadowValue.textContent = SHADOW_LABELS[settings.dmShadow];
+      dmLayer?.setShadow(settings.dmShadow);
       persist();
     });
 

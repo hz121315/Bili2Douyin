@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Bili2Douyin · B站弹幕同步助手",
-  "version": "2.0.1",
+  "version": "2.3.0",
   "description": "在抖音直播间画面里叠加显示 B 站直播间弹幕，可调节延迟同步两个直播间。Overlay Bilibili live danmaku on Douyin live streams with adjustable time-offset sync.",
   "minimum_chrome_version": "116",
   "permissions": [

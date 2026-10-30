@@ -23,15 +23,28 @@
 
 适用于 Chrome / Edge 等 Chromium 内核浏览器（需要 Chrome 116+）。
 
+### 方式一：下载 Release 压缩包（推荐给普通用户）
+
+1. 打开 [Releases](https://github.com/hz121315/Bili2Douyin/releases) 页面，下载最新的 `Bili2Douyin-vX.Y.Z.zip`
+2. 解压到任意目录（**不要直接在压缩包里加载**，需要先解压）
+3. 打开 `chrome://extensions`（Edge 是 `edge://extensions`）
+4. 打开右上角的「开发者模式」
+5. 点击「加载已解压的扩展程序」，选择**解压后包含 `manifest.json` 的那个目录**
+6. 打开任意抖音直播间，例如 `https://live.douyin.com/xxxx`
+   （插件只在 `live.douyin.com` 的直播页生效）
+
+> 压缩包里已经包含 `manifest.json`、运行代码、`README.md`、`LICENSE` 和 `PRIVACY.md`，没有开发文件，可以直接用于 Chrome 应用商店提交。
+
+### 方式二：从源码加载（开发者）
+
 ```bash
 git clone https://github.com/hz121315/Bili2Douyin.git
 ```
 
 1. 打开 `chrome://extensions`（Edge 是 `edge://extensions`）
 2. 打开右上角的「开发者模式」
-3. 点击「加载已解压的扩展程序」，选择本目录
-4. 打开任意抖音直播间，例如 `https://live.douyin.com/xxxx`
-   （插件只在 `live.douyin.com` 的直播页生效）
+3. 点击「加载已解压的扩展程序」，选择仓库目录
+4. 打开任意抖音直播间
 
 > 如果你是**更新**这个扩展：点扩展卡片上的「重新加载」，然后刷新一次已经打开的抖音直播页。之后新打开的直播页不需要再手动刷新。
 
@@ -175,6 +188,7 @@ git clone https://github.com/hz121315/Bili2Douyin.git
 - 不申请 `cookies` 权限，不读取登录态；目前也不包含“发送弹幕”功能
 - `tools/`、`dev/` 里的脚本只在本机运行，不会把数据发到外部服务器
 - 仓库内的示例房间号（`6` / `3044248` / `7734200`）都是公开的中性示例
+- 完整说明见 [PRIVACY.md](PRIVACY.md)
 
 ## 文件结构
 

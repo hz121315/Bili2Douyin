@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>弹幕层调度测试</title>
+  <link rel="stylesheet" href="../content.css">
+  <style>
+    html, body { margin: 0; height: 100%; background: #101218; color: #e8eaf3; font: 13px/1.6 sans-serif; overflow: hidden; }
+    #fake-video { position: absolute; left: 0; top: 0; width: 930px; height: 523px; background: #1d2330; }
+    #out { position: absolute; left: 960px; top: 10px; width: 300px; white-space: pre-wrap; font-family: Consolas, monospace; }
+    video { border: 0; }
+  </style>
+</head>
+<body>
+  <video id="fake-video"></video>
+  <div id="out"></div>
+  <script src="../danmaku-layer.js"></script>
+  <script src="layer-test.js"></script>
+</body>
+</html>

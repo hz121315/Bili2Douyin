@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>B站弹幕同步助手</title>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 300px;
+      margin: 0;
+      padding: 12px;
+      background: #14151b;
+      color: #e8eaf3;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 11px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #6b7280;
+      flex: none;
+    }
+
+    .dot[data-phase="connected"] {
+      background: #34d399;
+      box-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+    }
+
+    .dot[data-phase="connecting"],
+    .dot[data-phase="reconnecting"] {
+      background: #fbbf24;
+    }
+
+    .dot[data-phase="error"] {
+      background: #f87171;
+    }
+
+    .title {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .status {
+      margin-left: auto;
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 11px;
+      color: rgba(232, 234, 243, 0.62);
+    }
+
+    .row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      min-width: 0;
+      padding: 6px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.07);
+      color: #f2f3f7;
+      font: inherit;
+      outline: none;
+    }
+
+    input[type="text"]::placeholder {
+      color: rgba(232, 234, 243, 0.32);
+    }
+
+    input[type="text"]:focus {
+      border-color: rgba(124, 140, 255, 0.7);
+    }
+
+    button {
+      padding: 6px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #e8eaf3;
+      font: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    button.primary {
+      border-color: #5c68e8;
+      background: #4f5bd5;
+      color: #fff;
+    }
+
+    button.primary:hover {
+      background: #5a67e6;
+    }
+
+    button.ghost {
+      flex: 1;
+    }
+
+    .offset {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 8px;
+      padding: 7px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .offset button {
+      padding: 2px 6px;
+      font-size: 11px;
+    }
+
+    .offset-value {
+      flex: 1;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      font-size: 13px;
+      font-weight: 600;
+      color: #c4c9ff;
+    }
+
+    .hint {
+      margin: 2px 0 0;
+      font-size: 11px;
+      line-height: 1.6;
+      color: rgba(232, 234, 243, 0.42);
+    }
+
+    body.unavailable .row,
+    body.unavailable .offset {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="dot" id="dot" data-phase="idle"></span>
+    <span class="title">B站弹幕同步</span>
+    <span class="status" id="status">检测中…</span>
+  </header>
+
+  <div class="row">
+    <input id="room" type="text" placeholder="B 站房间号 / 链接" spellcheck="false">
+    <button id="connect" class="primary">连接</button>
+  </div>
+
+  <div class="offset">
+    <button data-delta="-1000" title="延迟 -1 秒">-1s</button>
+    <button data-delta="-500" title="延迟 -0.5 秒">-0.5s</button>
+    <span class="offset-value" id="offsetLabel">0.0s</span>
+    <button data-delta="500" title="延迟 +0.5 秒">+0.5s</button>
+    <button data-delta="1000" title="延迟 +1 秒">+1s</button>
+  </div>
+
+  <div class="row">
+    <button id="togglePanel" class="ghost">显示 / 隐藏面板</button>
+    <button id="disconnect" class="ghost">断开</button>
+  </div>
+
+  <p class="hint">在抖音直播间（live.douyin.com）使用。弹幕默认飞在直播画面里；如果没出现，请刷新一次抖音页面。面板隐藏后按 Alt+B 恢复，Alt+[ / Alt+] 微调 0.2 秒。</p>
+
+  <script src="popup.js"></script>
+</body>
+</html>

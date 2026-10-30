@@ -1,0 +1,69 @@
+{
+  "manifest_version": 3,
+  "name": "Bili2Douyin · B站弹幕同步助手",
+  "version": "2.0.1",
+  "description": "在抖音直播间画面里叠加显示 B 站直播间弹幕，可调节延迟同步两个直播间。Overlay Bilibili live danmaku on Douyin live streams with adjustable time-offset sync.",
+  "minimum_chrome_version": "116",
+  "permissions": [
+    "storage",
+    "declarativeNetRequest",
+    "scripting",
+    "offscreen"
+  ],
+  "host_permissions": [
+    "https://*.bilibili.com/*",
+    "https://live.douyin.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "B站弹幕同步助手",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://live.douyin.com/*"
+      ],
+      "js": [
+        "danmaku-layer.js",
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "frame.html"
+      ],
+      "matches": [
+        "https://live.douyin.com/*"
+      ]
+    }
+  ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "bili_referer",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  }
+}

@@ -1,0 +1,35 @@
+/* 开发自测页样式：模拟一个深色直播画面 */
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: radial-gradient(circle at 30% 20%, #2a3550, #0b0d13 60%);
+  color: #e8eaf3;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  overflow: hidden;
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.stage-text {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(232, 234, 243, 0.18);
+}
+
+.stage-sub {
+  max-width: 520px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: rgba(232, 234, 243, 0.32);
+}

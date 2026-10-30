@@ -52,6 +52,7 @@
       this.fontSize = 20;
       this.fontFamily =
         '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif';
+      this.fontWeight = 500;
       this.laneHeight = 33;
       this.laneFreeAt = [];
       this.active = new Set();
@@ -118,6 +119,14 @@
       this.applyStyleVars();
     }
 
+    /** 画面内弹幕字重（300 ~ 700）。 */
+    setFontWeight(value) {
+      const next = Number(value);
+      if (!Number.isFinite(next)) return;
+      this.fontWeight = clamp(Math.round(next), 300, 700);
+      this.applyStyleVars();
+    }
+
     /** 画面内弹幕不透明度（0.2 ~ 1）。 */
     setOpacity(value) {
       const next = Number(value);
@@ -139,6 +148,7 @@
       this.root.style.setProperty('--bdm-dm-opacity', String(this.opacity));
       this.root.style.setProperty('--bdm-dm-shadow', SHADOWS[this.shadowLevel] || SHADOWS[2]);
       this.root.style.setProperty('--bdm-dm-font', this.fontFamily);
+      this.root.style.setProperty('--bdm-dm-weight', String(this.fontWeight));
     }
 
     /** 颜色模式：original（跟随 B 站）/ white / custom。 */

@@ -474,7 +474,7 @@
   top: 0;
   white-space: nowrap;
   will-change: transform;
-  font-weight: 700;
+  font-weight: var(--bdm-dm-weight, 500);
   line-height: 1.25;
   letter-spacing: 0.01em;
   color: #fff;

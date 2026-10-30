@@ -42,6 +42,7 @@
     dmOpacity: 1,
     dmShadow: 2,
     dmFontFamily: 'system',
+    dmFontWeight: 500,
     savedRooms: [],
     dmColorMode: 'original',
     dmColor: '#ffffff',
@@ -67,6 +68,11 @@
     kaiti: 'KaiTi, "楷体", "Kaiti SC", serif',
     sourcehan: '"Source Han Sans SC", "Noto Sans CJK SC", "Noto Sans SC", "Microsoft YaHei", sans-serif',
     pingfang: '"PingFang SC", "苹方", "Microsoft YaHei", sans-serif',
+    dengxian: 'DengXian, "等线", "Microsoft YaHei", sans-serif',
+    fangsong: 'FangSong, "仿宋", "STFangsong", "Songti SC", serif',
+    stxihei: 'STXihei, "华文细黑", "Microsoft YaHei", sans-serif',
+    sourcehanserif: '"Source Han Serif SC", "Noto Serif CJK SC", "Noto Serif SC", "Songti SC", serif',
+    yaheiLight: '"Microsoft YaHei Light", "Microsoft YaHei", "微软雅黑", sans-serif',
   };
 
   const EMOTICONS = {
@@ -161,6 +167,15 @@
           <input class="bdm-range" data-role="dmFontRange" type="range" min="14" max="40" step="1">
         </div>
         <div class="bdm-field">
+          <label class="bdm-label">画面内弹幕字重</label>
+          <div class="bdm-seg" data-role="dmWeightGroup">
+            <button type="button" class="bdm-seg-btn" data-weight="300">细</button>
+            <button type="button" class="bdm-seg-btn" data-weight="400">常规</button>
+            <button type="button" class="bdm-seg-btn" data-weight="500">中等</button>
+            <button type="button" class="bdm-seg-btn" data-weight="700">加粗</button>
+          </div>
+        </div>
+        <div class="bdm-field">
           <label class="bdm-label">画面内弹幕字体</label>
           <div class="bdm-font-grid" data-role="dmFontFamilyGroup">
             <button type="button" class="bdm-font-chip" data-font="system">系统默认</button>
@@ -170,6 +185,11 @@
             <button type="button" class="bdm-font-chip" data-font="kaiti">楷体</button>
             <button type="button" class="bdm-font-chip" data-font="sourcehan">思源黑体</button>
             <button type="button" class="bdm-font-chip" data-font="pingfang">苹方</button>
+            <button type="button" class="bdm-font-chip" data-font="dengxian">等线</button>
+            <button type="button" class="bdm-font-chip" data-font="fangsong">仿宋</button>
+            <button type="button" class="bdm-font-chip" data-font="stxihei">华文细黑</button>
+            <button type="button" class="bdm-font-chip" data-font="sourcehanserif">思源宋体</button>
+            <button type="button" class="bdm-font-chip" data-font="yaheiLight">雅黑细体</button>
           </div>
         </div>
         <div class="bdm-field">
@@ -352,6 +372,9 @@
       ? clamp(Math.round(Number(settings.dmShadow)), 0, 3)
       : DEFAULTS.dmShadow;
     if (!FONT_STACKS[settings.dmFontFamily]) settings.dmFontFamily = DEFAULTS.dmFontFamily;
+    settings.dmFontWeight = [300, 400, 500, 600, 700].includes(Number(settings.dmFontWeight))
+      ? Number(settings.dmFontWeight)
+      : DEFAULTS.dmFontWeight;
     settings.savedRooms = Array.isArray(settings.savedRooms)
       ? settings.savedRooms
           .filter((room) => room && /^\d{1,12}$/.test(String(room.roomId)))
@@ -427,6 +450,7 @@
     el.dmFontValue = root.querySelector('[data-role="dmFontValue"]');
     el.dmFontPresets = root.querySelector('[data-role="dmFontPresets"]');
     el.dmFontFamilyGroup = root.querySelector('[data-role="dmFontFamilyGroup"]');
+    el.dmWeightGroup = root.querySelector('[data-role="dmWeightGroup"]');
     el.savedRooms = root.querySelector('[data-role="savedRooms"]');
     el.dmSpeedRange = root.querySelector('[data-role="dmSpeedRange"]');
     el.dmSpeedValue = root.querySelector('[data-role="dmSpeedValue"]');
@@ -465,6 +489,7 @@
     el.dmFontValue.textContent = `${settings.dmFontSize}px`;
     applyFontPresetUI();
     applyFontFamilyUI();
+    applyFontWeightUI();
     el.dmSpeedRange.value = String(settings.dmSpeed);
     el.dmSpeedValue.textContent = `${settings.dmSpeed} 秒`;
     el.dmOpacityRange.value = String(Math.round(settings.dmOpacity * 100));
@@ -487,6 +512,7 @@
     dmLayer?.setOpacity(settings.dmOpacity);
     dmLayer?.setShadow(settings.dmShadow);
     dmLayer?.setFontFamily(FONT_STACKS[settings.dmFontFamily] || FONT_STACKS.system);
+    dmLayer?.setFontWeight(settings.dmFontWeight);
     dmLayer?.setColorMode(settings.dmColorMode, settings.dmColor);
     dmLayer?.setDensity(settings.dmDensity);
     dmLayer?.setAreaRatio(areaRatio(settings.dmArea));
@@ -563,6 +589,22 @@
     for (const button of el.dmFontFamilyGroup.querySelectorAll('[data-font]')) {
       button.classList.toggle('is-active', button.dataset.font === settings.dmFontFamily);
     }
+  }
+
+  function applyFontWeightUI() {
+    if (!el.dmWeightGroup) return;
+    for (const button of el.dmWeightGroup.querySelectorAll('[data-weight]')) {
+      button.classList.toggle('is-active', Number(button.dataset.weight) === settings.dmFontWeight);
+    }
+  }
+
+  function setDanmakuWeight(value) {
+    const weight = Number(value);
+    if (![300, 400, 500, 600, 700].includes(weight)) return;
+    settings.dmFontWeight = weight;
+    applyFontWeightUI();
+    dmLayer?.setFontWeight(weight);
+    persist();
   }
 
   function setDanmakuFont(fontKey) {
@@ -1266,6 +1308,12 @@
       const button = event.target.closest('[data-font]');
       if (!button) return;
       setDanmakuFont(button.dataset.font);
+    });
+
+    el.dmWeightGroup.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-weight]');
+      if (!button) return;
+      setDanmakuWeight(button.dataset.weight);
     });
 
     el.savedRooms.addEventListener('click', (event) => {
